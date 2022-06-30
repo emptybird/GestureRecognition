@@ -1,5 +1,6 @@
 from gtts import *
-list = ['0','1','2','3','4','5']
+
+list = [str(i) for i in range(0,6)]
 
 for i in list:
     filename = 'sound/' + i + '.mp3'

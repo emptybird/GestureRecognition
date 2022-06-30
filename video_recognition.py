@@ -29,8 +29,7 @@ class Window(QWidget):
         self.count = -1
 
     def init_vit(self):
-        # self.model = Model()
-        pass
+        self.model = Model()
 
     def init_ui(self):
         # 设置窗口的大小
@@ -99,7 +98,12 @@ class Window(QWidget):
         success, img = self.cap.read()
         if success:
             # 检测手势
-            img = self.detector.find_hands(img, draw=True)
+            img = self.detector.find_hands(img, draw=False)
+            # 手掌目标检测
+            palm_rect = self.detector.palm_detection(img, cv2)
+            if palm_rect:
+                resized_img  = self.resize_img(img, palm_rect)
+                print(self.model.recognize(resized_img))
             # 缓存当前手势图片
             self.gesture_img = img
             current_count = self.detector.finger_count(img)
@@ -109,11 +113,31 @@ class Window(QWidget):
                 QThreadPool.globalInstance().start(tts)
                 self.num.display(str(current_count))
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            # vit = Model()
-            # print(vit.recognize(img))
             show_img = QImage(img.data, img.shape[1], img.shape[0], QImage.Format_RGB888)
             self.picture.setPixmap(QPixmap.fromImage(show_img).scaled(self.picture.width(), self.picture.height()))
             self.picture.setScaledContents(True)
+
+    def resize_img(self, img, palm_rect):
+        if palm_rect:
+            border_w = min(palm_rect[2], img.shape[1])
+            border_h = min(palm_rect[3], img.shape[0])
+            region = img[palm_rect[1]:border_h, palm_rect[0]:border_w]
+            w, h = border_w - palm_rect[0], border_h - palm_rect[1]
+            max_length = max(w, h)
+            ratio = 64.0 / max_length
+            new_w, new_h = int(ratio * w), int(ratio * h)
+            resized = cv2.resize(region, (new_w, new_h))
+
+            W, H = 64, 64
+            top = bottom = (H - new_h) // 2
+            if top + bottom + new_h < H:
+                bottom += (H - top - bottom - new_h)
+            left = right =  (W - new_w) // 2
+            if left + right + new_w < W:
+                right += (W - left - right - new_w)
+            pad_image = cv2.copyMakeBorder(resized, top, bottom, left, right, cv2.BORDER_CONSTANT, value=(0,0,0))
+            cv2.imshow("resize image",pad_image)
+            return pad_image
 
     # 控制窗口显示在屏幕中心
     def center(self):

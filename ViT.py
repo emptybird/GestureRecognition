@@ -5,6 +5,8 @@ import torch
 from torch import nn
 from einops import rearrange, repeat
 from einops.layers.torch import Rearrange
+from torchvision import datasets,transforms
+import numpy as np
 
 class PreNorm(nn.Module):
     def __init__(self, dim, fn):
@@ -137,11 +139,20 @@ class Model:
         dropout = 0.1,
         emb_dropout = 0.1)
 
-
-        self.model.load_state_dict(torch.load('model/19_parameter.pkl'))
+        torch.save(self.model.state_dict(), "model/49.pkl")
+        self.model.load_state_dict(torch.load('model/49_parameter.pkl'))
 
     def recognize(self, img):
-        return self.model.forward(img)
+        print(type(img))
+        img = np.transpose(img, (2,0,1))
+        print(img.shape)
+        img = img[np.newaxis, :]
+        print(img.shape)
+
+        return self.model.forward(torch.tensor(img, dtype=torch.float32))
+
+    def recognize_tensor(self, img_tensor):
+        return self.model.forward(img_tensor)
 
 
 

@@ -3,12 +3,19 @@ import sys
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QIcon, QPixmap
-
+from ViT import Model
+from PIL import Image
+from torchvision import transforms
+import torch
 
 class Window(QWidget):
     def __init__(self):
         super().__init__()
+        self.init_vit()
         self.init_ui()
+
+    def init_vit(self):
+        self.model = Model()
 
     def init_ui(self):
         # 设置窗口的大小
@@ -51,13 +58,22 @@ class Window(QWidget):
         # 显示窗口
         self.show()
 
-    def recognize(self):
-        pass
+    def recognize(self, img):
+        transform = transforms.Compose([
+            transforms.PILToTensor(), transforms.ConvertImageDtype(dtype=torch.float32)
+        ])
+        img_tensor = transform(img)
+        img_tensor = img_tensor[None, :]
+        print(img_tensor.shape)
+        print(self.model.recognize_tensor(img_tensor))
 
     def select_image(self):
         imgName, imgType = QFileDialog.getOpenFileName(self, "选择图片", "", "Image Files(*.jpg;*.jpeg;*.png)")
         jpg = QPixmap(imgName).scaled(self.picture.width(), self.picture.height(), aspectRatioMode = Qt.KeepAspectRatio)
         self.picture.setPixmap(jpg)
+        image = Image.open(imgName)
+        self.recognize(image)
+
 
     # 控制窗口显示在屏幕中心
     def center(self):

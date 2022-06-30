@@ -54,6 +54,32 @@ class HandDetector():
 
         return self.lmslist
 
+    def palm_detection(self, img, cv2):
+        xList = []
+        yList = []
+        lmList = []
+        handNo = 0
+        if self.results.multi_hand_landmarks:
+            myHand = self.results.multi_hand_landmarks[handNo]
+            for id, lm in enumerate(myHand.landmark):
+                h, w, c = img.shape
+                px, py = int(lm.x * w), int(lm.y * h)
+                xList.append(px)
+                yList.append(py)
+                lmList.append([px, py])
+            xmin, xmax = min(xList), max(xList)
+            ymin, ymax = min(yList), max(yList)
+            boxW, boxH = xmax - xmin, ymax - ymin
+            # cx, cy = xmin + (boxW // 2), \
+            #          ymin + (boxH // 2)
+            # bboxInfo = {"id": id, "center": (cx, cy)}
+            # print(bboxInfo)
+            padding = 50
+            box = (xmin - padding, ymin - padding, xmin + boxW + padding, ymin + boxH + padding)
+            cv2.rectangle(img, (box[0], box[1]), (box[2], box[3]),
+                        (0, 255, 0), 2)
+            return box
+
     def finger_count(self, img):
         # 指尖列表，分别代表大拇指、食指、中指、无名指和小指的指尖
         tip_ids = [4, 8, 12, 16, 20]
