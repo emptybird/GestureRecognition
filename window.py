@@ -1,11 +1,13 @@
 import sys
 
+from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QIcon, QPixmap
 from ViT import Model
 from PIL import Image
 from torchvision import transforms
+from playsound import playsound
 import torch
 
 class Window(QWidget):
@@ -30,6 +32,7 @@ class Window(QWidget):
 
         # 左侧展示选择的图片
         self.picture = QLabel()
+        self.picture.setAlignment(QtCore.Qt.AlignCenter)
         hbox.addWidget(self.picture)
 
         # 右侧展示按钮及识别结果
@@ -47,7 +50,7 @@ class Window(QWidget):
 
         # 识别结果
         self.num = QLCDNumber(self)
-        self.num.display('1')
+        self.num.display('0')
 
         vbox.addLayout(btn_layout)
         vbox.addWidget(self.num)
@@ -64,12 +67,15 @@ class Window(QWidget):
         ])
         img_tensor = transform(img)
         img_tensor = img_tensor[None, :]
-        print(img_tensor.shape)
-        print(self.model.recognize_tensor(img_tensor))
+        result = self.model.recognize_tensor(img_tensor)
+        finger_count = torch.max(result, 1)[1].data.numpy()[0]
+        self.num.display(str(finger_count))
+        playsound('sound/' + str(finger_count) + '.mp3')
+
 
     def select_image(self):
         imgName, imgType = QFileDialog.getOpenFileName(self, "选择图片", "", "Image Files(*.jpg;*.jpeg;*.png)")
-        jpg = QPixmap(imgName).scaled(self.picture.width(), self.picture.height(), aspectRatioMode = Qt.KeepAspectRatio)
+        jpg = QPixmap(imgName).scaled(self.picture.width() // 2 , self.picture.height() //2 , aspectRatioMode = Qt.KeepAspectRatio)
         self.picture.setPixmap(jpg)
         image = Image.open(imgName)
         self.recognize(image)

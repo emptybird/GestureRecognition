@@ -5,7 +5,6 @@ import torch
 from torch import nn
 from einops import rearrange, repeat
 from einops.layers.torch import Rearrange
-from torchvision import datasets,transforms
 import numpy as np
 
 class PreNorm(nn.Module):
@@ -145,10 +144,7 @@ class Model:
     def recognize(self, img):
         print(type(img))
         img = np.transpose(img, (2,0,1))
-        print(img.shape)
         img = img[np.newaxis, :]
-        print(img.shape)
-
         return self.model.forward(torch.tensor(img, dtype=torch.float32))
 
     def recognize_tensor(self, img_tensor):
